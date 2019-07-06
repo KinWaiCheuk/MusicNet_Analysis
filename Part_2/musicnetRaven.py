@@ -9,6 +9,8 @@ import csv
 import numpy as np
 import torch
 import pandas as pd
+from time import time
+from tqdm import tqdm
 
 from intervaltree import IntervalTree
 from scipy.io import wavfile
@@ -38,7 +40,8 @@ class MusicNet(data.Dataset):
     test_data, test_labels, test_tree = 'test_data', 'test_labels', 'test_tree.pckl'
     extracted_folders = [train_data,train_labels,test_data,test_labels]
 
-    def __init__(self, root, train=True, download=False, mmap=True, normalize=True, window=16384, pitch_shift=0, jitter=0., epoch_size=100000):
+    def __init__(self, root, train=True, download=False, refresh_cache=False, mmap=True, normalize=True, window=16384, pitch_shift=0, jitter=0., epoch_size=100000):
+        self.refresh_cache = refresh_cache
         self.mmap = mmap
         self.normalize = normalize
         self.window = window
@@ -46,12 +49,13 @@ class MusicNet(data.Dataset):
         self.jitter = jitter
         self.size = epoch_size
         self.m = 128
+#         self.counter = 0
 
         self.root = os.path.expanduser(root)
 
         if download:
             self.download()
-
+            
         if not self._check_exists():
             raise RuntimeError('Dataset not found.' +
                                ' You can use download=True to download it')
@@ -72,7 +76,7 @@ class MusicNet(data.Dataset):
 
     def __enter__(self):
         for record in os.listdir(self.data_path):
-            if not record.endswith('.npy'): continue
+            if not record.endswith('.bin'): continue
             if self.mmap:
                 fd = os.open(os.path.join(self.data_path, record), os.O_RDONLY)
                 buff = mmap.mmap(fd, 0, mmap.MAP_SHARED, mmap.PROT_READ)
@@ -109,11 +113,13 @@ class MusicNet(data.Dataset):
             x = np.frombuffer(self.records[rec_id][0][s*sz_float:int(s+scale*self.window)*sz_float], dtype=np.float32).copy()
         else:
             fid,_ = self.records[rec_id]
-#             with open(fid, 'rb') as f:
-#                 f.seek(s*sz_float, os.SEEK_SET)
-#                 x = np.fromfile(f, dtype=np.float32, count=int(scale*self.window))
-            x = np.load(fid)
-            x = x[s:s+self.window]
+#             start = time()
+            with open(fid, 'rb') as f:
+                f.seek(s*sz_float, os.SEEK_SET)
+                x = np.fromfile(f, dtype=np.float32, count=int(scale*self.window))
+#             x = torch.load(fid[:-4])
+#             x = x[s:s+self.window]
+#             print(time()-start)
 
         if self.normalize: x /= np.linalg.norm(x) + epsilon
 
@@ -125,6 +131,30 @@ class MusicNet(data.Dataset):
             y[label.data[1]+shift] = 1
 
         return x,y
+    
+    def access_full(self,rec_id):
+        """
+        Args:
+            rec_id (int): MusicNet id of the requested recording
+        Returns:
+            tuple: (audio, label)
+        """
+
+        fid,_ = self.records[rec_id]
+#             start = time()
+        with open(fid, 'rb') as f:
+#                 f.seek(s*sz_float, os.SEEK_SET)
+            x = np.fromfile(f, dtype=np.float32)
+#             x = torch.load(fid[:-4])
+#             x = x[s:s+self.window]
+#             print(time()-start)
+
+#         if self.normalize: x /= np.linalg.norm(x) + epsilon
+
+
+        y = self.labels[rec_id]
+
+        return x,y
 
     def __getitem__(self, index):
         """
@@ -133,7 +163,6 @@ class MusicNet(data.Dataset):
         Returns:
             tuple: (audio, target) where target is a binary vector indicating notes on at the center of the audio.
         """
-
         shift = 0
         if self.pitch_shift> 0:
             shift = np.random.randint(-self.pitch_shift,self.pitch_shift)
@@ -153,7 +182,8 @@ class MusicNet(data.Dataset):
         return os.path.exists(os.path.join(self.root, self.train_data)) and \
             os.path.exists(os.path.join(self.root, self.test_data)) and \
             os.path.exists(os.path.join(self.root, self.train_labels, self.train_tree)) and \
-            os.path.exists(os.path.join(self.root, self.test_labels, self.test_tree))
+            os.path.exists(os.path.join(self.root, self.test_labels, self.test_tree)) and \
+            not self.refresh_cache
 
     def download(self):
         """Download the MusicNet data if it doesn't exist in ``raw_folder`` already."""
@@ -192,7 +222,7 @@ class MusicNet(data.Dataset):
 
         # process and save as torch files
         print('Processing...')
-
+        
         self.process_data(self.test_data)
 
         trees = self.process_labels(self.test_labels)
@@ -204,46 +234,49 @@ class MusicNet(data.Dataset):
         trees = self.process_labels(self.train_labels)
         with open(os.path.join(self.root, self.train_labels, self.train_tree), 'wb') as f:
             pickle.dump(trees, f)
-
+            
+        self.refresh_cache = False
         print('Download Complete')
 
     # write out wavfiles as arrays for direct mmap access
     def process_data(self, path):
-        for item in os.listdir(os.path.join(self.root,path)):
+        print('Processing data')
+        for item in tqdm(os.listdir(os.path.join(self.root,path))):
             if not item.endswith('.wav'): continue
             uid = int(item[:-4])
             _, data = wavfile.read(os.path.join(self.root,path,item))
-            np.save(os.path.join(self.root,path,item[:-4]),data)
+            data.tofile(os.path.join(self.root,path,item[:-4]+'.bin'))
 
     # wite out labels in intervaltrees for fast access
     def process_labels(self, path):
+        print('Processing labels')
         trees = dict()
-        for item in os.listdir(os.path.join(self.root,path)):
+        for item in tqdm(os.listdir(os.path.join(self.root,path))):
             if not item.endswith('.csv'): continue
             uid = int(item[:-4])
             tree = IntervalTree()
-            df = pd.read_csv(os.path.join(self.root, path, item))
+#             df = pd.read_csv(os.path.join(self.root, path, item))
             
-            for label in df.iterrows():
-                start_time = label[1]['start_time']
-                end_time = label[1]['end_time']
-                instrument = label[1]['instrument']
-                note = label[1]['note']
-                start_beat = label[1]['start_beat']
-                end_beat = round(label[1]['end_beat'], 15) # Round to prevent float number precision problem
-                note_value = label[1]['note_value']
-                tree[start_time:end_time] = (instrument,note,start_beat,end_beat,note_value)            
+#             for label in df.iterrows():
+#                 start_time = label[1]['start_time']
+#                 end_time = label[1]['end_time']
+#                 instrument = label[1]['instrument']
+#                 note = label[1]['note']
+#                 start_beat = label[1]['start_beat']
+#                 end_beat = round(label[1]['end_beat'], 15) # Round to prevent float number precision problem
+#                 note_value = label[1]['note_value']
+#                 tree[start_time:end_time] = (instrument,note,start_beat,end_beat,note_value)            
             
-#             with open(os.path.join(self.root,path,item), 'r') as f:
-#                 reader = csv.DictReader(f, delimiter=',')
-#                 for label in reader:
-#                     start_time = int(label['start_time'])
-#                     end_time = int(label['end_time'])
-#                     instrument = int(label['instrument'])
-#                     note = int(label['note'])
-#                     start_beat = float(label['start_beat'])
-#                     end_beat = float(label['end_beat'])
-#                     note_value = label['note_value']
-#                     tree[start_time:end_time] = (instrument,note,start_beat,end_beat,note_value)
+            with open(os.path.join(self.root,path,item), 'r') as f:
+                reader = csv.DictReader(f, delimiter=',')
+                for label in reader:
+                    start_time = int(label['start_time'])
+                    end_time = int(label['end_time'])
+                    instrument = int(label['instrument'])
+                    note = int(label['note'])
+                    start_beat = float(label['start_beat'])
+                    end_beat = float(label['end_beat'])
+                    note_value = label['note_value']
+                    tree[start_time:end_time] = (instrument,note,start_beat,end_beat,note_value)
             trees[uid] = tree
         return trees
