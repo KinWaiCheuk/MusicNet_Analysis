@@ -49,6 +49,7 @@ class MusicNet(data.Dataset):
         self.jitter = jitter
         self.size = epoch_size
         self.m = 128
+        self.train = train
 #         self.counter = 0
 
         self.root = os.path.expanduser(root)
@@ -223,24 +224,28 @@ class MusicNet(data.Dataset):
         # process and save as torch files
         print('Processing...')
         
-        self.process_data(self.test_data)
+        if train:
+            print('processing train data...')
+            self.process_data(self.train_data)
+            print('processing train labels...')
+            trees = self.process_labels(self.train_labels)
+            with open(os.path.join(self.root, self.train_labels, self.train_tree), 'wb') as f:
+                pickle.dump(trees, f)           
+        else:
+            print('processing test data...')
+            self.process_data(self.test_data)
+            print('processing test labels...')
+            trees = self.process_labels(self.test_labels)
+            with open(os.path.join(self.root, self.test_labels, self.test_tree), 'wb') as f:
+                pickle.dump(trees, f)
 
-        trees = self.process_labels(self.test_labels)
-        with open(os.path.join(self.root, self.test_labels, self.test_tree), 'wb') as f:
-            pickle.dump(trees, f)
 
-        self.process_data(self.train_data)
-
-        trees = self.process_labels(self.train_labels)
-        with open(os.path.join(self.root, self.train_labels, self.train_tree), 'wb') as f:
-            pickle.dump(trees, f)
             
         self.refresh_cache = False
         print('Download Complete')
 
     # write out wavfiles as arrays for direct mmap access
     def process_data(self, path):
-        print('Processing data')
         for item in tqdm(os.listdir(os.path.join(self.root,path))):
             if not item.endswith('.wav'): continue
             uid = int(item[:-4])
@@ -249,7 +254,6 @@ class MusicNet(data.Dataset):
 
     # wite out labels in intervaltrees for fast access
     def process_labels(self, path):
-        print('Processing labels')
         trees = dict()
         for item in tqdm(os.listdir(os.path.join(self.root,path))):
             if not item.endswith('.csv'): continue
