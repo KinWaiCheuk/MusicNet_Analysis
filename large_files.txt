@@ -1,0 +1,42 @@
+11880440858 Part_2/Experiments/MultiLayer/icassp_data.tar.gz
+634129555 Part_2/Experiments/Transistion Invariant/weights/1 Layer CNN
+58378234 Part_2/weights/Toy_model_full
+53808275 Part_2/Experiments/Transistion Invariant/weights/2 Layer CNN-Copy1
+42860672 376_cropped_clips.npy
+29189929 Part_2/Experiments/Activation/weights/spectrograms_log-Pytorch-Sigmoid-CELoss_full
+28642459 Part_2/Experiments/Transistion Invariant/weights/2 Layers CNN-Tried Another Optim old
+28642459 Part_2/Experiments/Transistion Invariant/weights/2 Layers CNN-Tried Another Optim
+26477192 Part_2/Experiments/MultiLayer/weights/spectrograms_stft_logMag_logF-Pytorch-MSELoss_noAyg_-MultiLayer-1e-4-200e
+26477192 Part_2/Experiments/MultiLayer/weights/spectrograms_stft_logMag_logF-Pytorch-MSELoss-MultiLayer_Aug_1e-4_200e
+26477192 Part_2/Experiments/MultiLayer/weights/spectrograms_stft_logMag_logF-Pytorch-MSELoss-MultiLayer-finetune1
+26477192 Part_2/Experiments/MultiLayer/weights/spectrograms_stft_logMag_logF-Pytorch-MSELoss-MultiLayer-fine tune_1e-4_200e
+26477192 Part_2/Experiments/MultiLayer/weights/spectrograms_stft_logMag_logF-Pytorch-BCELoss-MultiLayer_Aug_5e-5
+26477192 Part_2/Experiments/MultiLayer/weights/spectrograms_stft_logMag_logF-Pytorch-BCELoss-MultiLayer_5e-5_20e
+26214528 Part_2/Experiments/MultiLayer/mlp/mlpw1.npy
+26214528 Part_2/Experiments/MultiLayer/mlp/mlpavg_w1.npy
+25297024 Part_2/Experiments/MultiLayer/convnet_experimental2/beta.npy
+25297024 Part_2/Experiments/MultiLayer/convnet_experimental2/avg_beta.npy
+24316286 Part_2/random_weights.gif
+23073063 Part_2/spectrograms_log-Pytorch-Playback.ipynb
+23073063 Part_2/Experiments/Playback.ipynb
+18006480 Part_2/Experiments/.ipynb_checkpoints/Playback-checkpoint.ipynb
+18006480 Part_2/.ipynb_checkpoints/spectrograms_log-Pytorch-Playback-checkpoint.ipynb
+12802152 Part_2/weights/Toy_weight
+11324656 Part_2/random_weights_bias_grad_set.gif
+10002879 Part_2/zero_weights_bias_grad_set.gif
+6553728 waveform_x.np.npy
+6553728 Tutorial/waveform_x.np.npy
+6401113 Part_2/Experiments/Activation/weights/spectrograms_stft_logMag_logF-Pytorch-Sigmoid-CELoss-noAvg
+6401113 Part_2/Experiments/Activation/weights/spectrograms_stft_logMag_logF-Pytorch-Sigmoid-CELoss
+6401113 Part_2/Experiments/Activation/weights/spectrograms_log-Pytorch-Sigmoid-CELoss
+6400453 checkpoints/musicnet_demo.pt
+6359877 Part_2/Loading data.ipynb
+5195828 Part_2/zero_weights.gif
+3852986 Tutorial Part 3.ipynb
+3276928 Part_2/Experiments/MultiLayer/convnet_experimental2/w2.npy
+3276928 Part_2/Experiments/MultiLayer/convnet_experimental2/avg_w2.npy
+2307106 Tutorial/Tutorial Part 3.ipynb
+1827832 Tutorial/Tutorial Part 1.ipynb
+1827832 Tutorial Part 1.ipynb
+1545880 .ipynb_checkpoints/Tutorial Part 3-checkpoint.ipynb
+1476646 Part_2/Experiments/Activation/piano.wav
