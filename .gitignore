@@ -4,3 +4,4 @@ data
 convnet_experimental2/
 mlp/
 weights/
+.DS_Store
