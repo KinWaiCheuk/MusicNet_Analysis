@@ -40,7 +40,7 @@ class MusicNet(data.Dataset):
     test_data, test_labels, test_tree = 'test_data', 'test_labels', 'test_tree.pckl'
     extracted_folders = [train_data,train_labels,test_data,test_labels]
 
-    def __init__(self, root, train=True, download=False, refresh_cache=False, mmap=True, normalize=True, window=16384, pitch_shift=0, jitter=0., epoch_size=100000):
+    def __init__(self, root, train=True, download=False, refresh_cache=False, mmap=True, normalize=True, window=16384,sequence=1, pitch_shift=0, jitter=0., epoch_size=100000):
         self.refresh_cache = refresh_cache
         self.mmap = mmap
         self.normalize = normalize
@@ -50,6 +50,7 @@ class MusicNet(data.Dataset):
         self.size = epoch_size
         self.m = 128
         self.train = train
+        self.sequence = sequence
 #         self.counter = 0
 
         self.root = os.path.expanduser(root)
@@ -133,6 +134,42 @@ class MusicNet(data.Dataset):
 
         return x,y
     
+    def accessv2(self,rec_id,s,sequence,shift=0,jitter=0):
+        """
+        Args:
+            rec_id (int): MusicNet id of the requested recording
+            s (int): Position of the requested data point
+            shift (int, optional): Integral pitch-shift data transformation
+            jitter (float, optional): Continuous pitch-jitter data transformation
+        Returns:
+            tuple: (audio, target) where target is a binary vector indicating notes on at the center of the audio.
+        """
+
+        scale = 2.**((shift+jitter)/12.)
+
+        if self.mmap:
+            x = np.frombuffer(self.records[rec_id][0][s*sz_float:int(s+scale*self.window*sequence)*sz_float], dtype=np.float32).copy()
+        else:
+            fid,_ = self.records[rec_id]
+#             start = time()
+            with open(fid, 'rb') as f:
+                f.seek(s*sz_float, os.SEEK_SET)
+                x = np.fromfile(f, dtype=np.float32, count=int(scale*self.window*sequence))
+#             x = torch.load(fid[:-4])
+#             x = x[s:s+self.window]
+#             print(time()-start)
+
+        if self.normalize: x /= np.linalg.norm(x) + epsilon
+
+        xp = np.arange(self.window*sequence,dtype=np.float32)
+        x = np.interp(scale*xp,np.arange(len(x),dtype=np.float32),x).astype(np.float32)
+
+        y = np.zeros(self.m,dtype=np.float32)
+        for label in self.labels[rec_id][s+scale*self.window/2]:
+            y[label.data[1]+shift] = 1
+
+        return x,y
+    
     def access_full(self,rec_id):
         """
         Args:
@@ -174,7 +211,8 @@ class MusicNet(data.Dataset):
 
         rec_id = self.rec_ids[np.random.randint(0,len(self.rec_ids))]
         s = np.random.randint(0,self.records[rec_id][1]-(2.**((shift+jitter)/12.))*self.window)
-        return self.access(rec_id,s,shift,jitter)
+#         return self.access(rec_id,s,shift,jitter)
+        return self.accessv2(rec_id,s,self.sequence,shift,jitter)
 
     def __len__(self):
         return self.size
