@@ -57,7 +57,7 @@ class MusicNet(data.Dataset):
 
         if download:
             self.download()
-            
+
         if not self._check_exists():
             raise RuntimeError('Dataset not found.' +
                                ' You can use download=True to download it')
@@ -97,7 +97,7 @@ class MusicNet(data.Dataset):
                 os.close(fd)
             self.records = dict()
             self.open_files = []
- 
+
     def access(self,rec_id,s,shift=0,jitter=0):
         """
         Args:
@@ -133,7 +133,7 @@ class MusicNet(data.Dataset):
             y[label.data[1]+shift] = 1
 
         return x,y
-    
+
     def accessv2(self,rec_id,s,sequence,shift=0,jitter=0):
         """
         Args:
@@ -169,7 +169,7 @@ class MusicNet(data.Dataset):
             y[label.data[1]+shift] = 1
 
         return x,y
-    
+
     def access_full(self,rec_id):
         """
         Args:
@@ -261,14 +261,14 @@ class MusicNet(data.Dataset):
 
         # process and save as torch files
         print('Processing...')
-        
-        if train:
+
+        if self.train:
             print('processing train data...')
             self.process_data(self.train_data)
             print('processing train labels...')
             trees = self.process_labels(self.train_labels)
             with open(os.path.join(self.root, self.train_labels, self.train_tree), 'wb') as f:
-                pickle.dump(trees, f)           
+                pickle.dump(trees, f)
         else:
             print('processing test data...')
             self.process_data(self.test_data)
@@ -278,7 +278,7 @@ class MusicNet(data.Dataset):
                 pickle.dump(trees, f)
 
 
-            
+
         self.refresh_cache = False
         print('Download Complete')
 
@@ -298,7 +298,7 @@ class MusicNet(data.Dataset):
             uid = int(item[:-4])
             tree = IntervalTree()
 #             df = pd.read_csv(os.path.join(self.root, path, item))
-            
+
 #             for label in df.iterrows():
 #                 start_time = label[1]['start_time']
 #                 end_time = label[1]['end_time']
@@ -307,8 +307,8 @@ class MusicNet(data.Dataset):
 #                 start_beat = label[1]['start_beat']
 #                 end_beat = round(label[1]['end_beat'], 15) # Round to prevent float number precision problem
 #                 note_value = label[1]['note_value']
-#                 tree[start_time:end_time] = (instrument,note,start_beat,end_beat,note_value)            
-            
+#                 tree[start_time:end_time] = (instrument,note,start_beat,end_beat,note_value)
+
             with open(os.path.join(self.root,path,item), 'r') as f:
                 reader = csv.DictReader(f, delimiter=',')
                 for label in reader:
