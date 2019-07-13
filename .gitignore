@@ -1,5 +1,6 @@
 ./data
 ./Part_2/.ipynb_checkpoints  
+./Part_2/Experiments/Activation/.ipynb_checkpoints/
 ./.ipynb_checkpoints
 ./Part_2/Experiments/MultiLayer/data/*
 ./Part_2/Experiments/MultiLayer/convnet_experimental2/*
