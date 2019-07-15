@@ -164,9 +164,10 @@ class MusicNet(data.Dataset):
         xp = np.arange(self.window*sequence,dtype=np.float32)
         x = np.interp(scale*xp,np.arange(len(x),dtype=np.float32),x).astype(np.float32)
 
-        y = np.zeros(self.m,dtype=np.float32)
-        for label in self.labels[rec_id][s+scale*self.window/2]:
-            y[label.data[1]+shift] = 1
+        y = np.zeros((sequence,self.m),dtype=np.float32)
+        for num_frame in range(sequence):
+            for label in self.labels[rec_id][(s + num_frame*self.window)+scale*self.window/2]:
+                 y[num_frame,label.data[1]+shift] = 1
 
         return x,y
 
